@@ -1,0 +1,112 @@
+
+erreurmin= 10**-2 # erreur pour la descente en gradient sans contrainte par rapport au minimum voulu
+
+pasderivee= 10**-4 # Pour l'approximation des dérivées
+
+## Algorithme descente en gradient
+#pour le calcul des fonctions à n variables, les n variables seront stockes  la fonction sera de la forme f(l)
+
+from math import sqrt
+
+def calculderiveepartielle (f,L,pasderive,x):
+    # X est l'indice de la  variable , le pas est trivialement  le pas et f la fonction à n variable
+    """Renvoie la valeur de la derivée partielle en x  """
+    # Ici, pour diminuer la complexité, on calcule la derive partielle in place, pour cela on ajoute directement à la liste L
+    a1= f(L)
+    L[x]=L[x]+pasderive
+    aapres=f(L)  # c'est le f(x+h)
+    L[x]=L[x]-pasderive
+    return (aapres-a1)/pasderive
+
+def norme(L):
+    """ Renvoie la norme euclidienne des n uplets (a,b,c,d): sqrt(a²+b²+c²+d² ...)
+    """
+    resultat = 0
+    for k in L:
+        resultat+= k**2
+    return sqrt(resultat)
+
+def gradient(f,L,pasderive):
+    """On renvoie le gradient des dérivées partielles dans l'ordre usuelle"""
+    # L désigne la liste qui contient les n variables de f, """
+    resultat = [] # c'est le gradient
+    for indicevariable in range(len(L)):
+      resultat.append(calculderiveepartielle(f,L,pasderive,indicevariable))   # on ajouter df/dx
+    return resultat
+
+
+
+
+
+
+# NB : ATTENTION POUR LE CALCUL DE DERIVEE DANS NOTRE PARADOXE , ON CONNAIT EXACTEMENT LA VALEUR DE CETTE DERIVEE : CEST LA FONCTION DE LATENCE
+def Algogradientavecderivee(f,L,pasequilibre):
+  """ Renvoie la liste sensé être un minimum local de la fonction f"""
+  # Algo Classique de descente en gradient qui calcule approximativement la dérivée. Il marche dans le cas d'une optimisation sans contrainte
+  #erreurmin est l'erreur associé au minimum
+  # Il utilise comme constante global: erreur min
+  equilibretemporaire=L[:] # l represente la liste ou on va stocker nos n uplets
+  grad= gradient(f,equilibretemporaire,pasderivee) #Il represente  notre gradient
+  #print("equilibretemporaire",equilibretemporaire,"gradient",grad)
+  nombreiteration= 0
+  
+  while norme(grad) >erreurmin :  #Tant qu'on est superieur à l'erreur  ( En effet au minimum on a une norme sensiblement egale à 0 car on est dans un minimum pour les n variable )
+    for k in range(len(equilibretemporaire)):
+        equilibretemporaire[k]= equilibretemporaire[k]-pasequilibre*grad[k]
+        """" Parce que si la derivee est postive il faut aller de l'autre sens ( car le minimum est plus bas ) et on  modifie chaque terme de la liste"""
+    grad=gradient(f,equilibretemporaire,pasderivee)
+    nombreiteration+=1
+   return equilibretemporaire  #On renvoie le groupe de n-uplets qui representent notre  minimum
+
+
+
+
+
+
+
+
+
+
+
+
+
+def indmin(L):
+    """Renvoie l'indice du minimum"""
+    i=0
+    min=L[0]
+    for k in range(1,len(L)):
+        if L[k]<min:
+            i=k
+            min=L[i]
+
+    return i
+
+
+
+def Algogradientprojete(f,L,N,m):
+  # Méthode de Descente en gradient dans le cas d'un ensemble convexe avec des contraintes de type simplexe.
+  """ Renvoie l'équilibre trouvé après l'algorithme """
+  # N est le nombre d'itération
+  # m désigne la plus grande valeur possible dans une des variables possible
+  mintemp=L[:] # l represente la liste ou on va stocker nos n uplets
+  grad= gradient(f,mintemp,pasderivee) #Il represente  notre gradient
+ 
+  nombreiteration= 0
+  
+  for k in range(N):
+    
+    grad=gradient(f,mintemp,pasderivee) # Calcul du gradient
+    gamma=2/(2+nombreiteration)
+    # détermination de la direction de descente  Ici la direction est donnée par le nombre avec la plus petite dérivée
+    i= indmin(grad)
+    # on construit la direction, la direction qui minimise est celle ou la dérivée est la plus faible
+    xk=[0 for k in range(len(L))]
+    xk[i]=m # à priori, m désigne  le nombre total d'individu
+    for k in range(len(mintemp)):
+        mintemp[k]= mintemp[k]+ gamma*(xk[k]-mintemp[k]) # On se déplace en crabe pour obtenir notre équilibre # ATTENTION AU MOINS
+
+    nombreiteration+=1
+   return mintemp  #On renvoie le groupe de n-uplets qui representent notre  minimum
+
+
+##  Fin  descente  en gradient
